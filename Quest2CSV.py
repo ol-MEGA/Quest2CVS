@@ -1,3 +1,10 @@
+# Copyright 2021 Sven Franz <sven.franz@jade-hs.de>
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# 2021-07-09 Version 1.0 Beta 1
+
 import sys, os
 import configparser
 import tkinter as tk
@@ -51,6 +58,8 @@ def handle_click(event):
             config.set('default', 'CSVOutputFile', value)
     elif event.widget == buttons[3]:
         executeQuest2CSV(entrys[0].get(), entrys[1].get(), entrys[2].get(), False)
+        messagebox.showinfo("Info", "Done")
+
         
 def keys2lower(iterable):
     if type(iterable) is dict:
@@ -68,7 +77,7 @@ def getValue(xmlData, searchItem, value = False):
     if type(xmlData) is dict:
         for data in xmlData:
             if data.lower() == searchItem.lower():
-                if value != False and xmlData[searchItem].lower() == value.lower():
+                if value != False and xmlData[searchItem].lower().replace("_", "") == value.lower().replace("_", ""):
                     return xmlData
                 elif value == False:
                     return xmlData[searchItem]
@@ -114,19 +123,20 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                         dataRow = {}
                         dataRow["File"] = os.path.basename(QuestionnaireFile)
                         dataRow["Subject"] = ""
-                        temppath = os.path.split(QuestionnaireFile)[0].split(os.sep)[-1]
+                        temppath = os.path.split(QuestionnaireResult)[0].split(os.sep)[-1]
                         if temppath.endswith("_Quest"):
                             dataRow["Subject"] = temppath.split("_Quest")[0]
                         dataRow["Motivation"] = getValue(result["mobiquest"], "@motivation")
                         for question in questionnaire["mobiquest"]["survey"]["question"]:
                             if "label" in question.keys() and "text" in question["label"].keys() and "@id" in question.keys():
-                                id = str(question["@id"])
+                                id = str(question["@id"]).replace("_", "")
                                 if "@hidden" in question.keys() and question["@hidden"] == "true":
                                     dataRow[question['label']['text']] = getValue(result["mobiquest"], "@" + question["label"]["text"].replace(" ", "_").replace("(", "").replace(")", "").lower())
                                 elif "@type" in question.keys() and question["@type"] == "checkbox" and "option" in question.keys():
                                     currAnswer = getValue(result["mobiquest"], "@question_id", question["@id"])
                                     dataRow[id] = {"text" : question["label"]["text"], "value": 0, "values": {}}
                                     for option in question["option"]:
+                                        option["@id"] = option["@id"].replace("_", "")
                                         dataRow[id]["values"][option["@id"]] = {"text": str(option["text"]), "value" : 0}
                                         if "@option_ids" in currAnswer.keys() and option["@id"] in currAnswer["@option_ids"].split(";"):
                                             dataRow[id]["values"][option["@id"]]["value"] = 1
@@ -137,11 +147,15 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                                     if "@option_ids" in res.keys():
                                         dataRow[id]["values"][res["@option_ids"]] = ""
                                         res_label = getValue(question, "@id", res["@option_ids"])
-                                        if "text" in res_label.keys():
+                                        if type(res_label) is dict and "text" in res_label.keys():
                                             dataRow[id]["values"][res["@option_ids"]] = res_label["text"]
-                                            
+                                        elif "@type" in question.keys() and (question["@type"] == "sliderFree" or question["@type"] == "text"):
+                                            dataRow[id]["values"][res["@option_ids"]] = res["@option_ids"]
+                        newFile = False
                         if not os.path.isfile(CSVOutputFile):
-                            with open(CSVOutputFile, "a") as file_object:
+                            newFile = True                
+                        with open(CSVOutputFile, "a") as file_object:
+                            if newFile:
                                 for item in dataRow:
                                     file_object.write(item + ";")
                                     if type(dataRow[item]) is dict and "values" in dataRow[item].keys():
@@ -162,7 +176,7 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                                     else:
                                         file_object.write(";")
                                 file_object.write("\n")
-                        with open(CSVOutputFile, "a") as file_object:
+
                             for item in dataRow:
                                 if type(dataRow[item]) is dict and "values" in dataRow[item].keys():
                                     if len(dataRow[item]["values"]) == 0:
@@ -193,7 +207,7 @@ if __name__ == "__main__":
         buttons = list()
         entrys = list()
         checkbuttons = list();
-        labelTexts = ['Questionnaire File', 'Questionnaire Result File', 'CSV Output File']
+        labelTexts = ['Questionnaire File', 'Questionnaire Result Folder', 'CSV Output File']
         window = tk.Tk()
         for idx in range(len(labelTexts)):
             frame = list()
@@ -224,3 +238,4 @@ if __name__ == "__main__":
         executeQuest2CSV(sys.argv[1], sys.argv[2], sys.argv[3])
     else:
         raise ValueError("Wrong usage of parameters")
+
