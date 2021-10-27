@@ -63,7 +63,8 @@ def handle_click(event):
         
 def keys2lower(iterable):
     if type(iterable) is dict:
-        for key in iterable.keys():
+        keys = list(iterable.keys())
+        for key in keys:
             iterable[key.lower()] = iterable.pop(key)
             if type(iterable[key.lower()]) is dict or type(iterable[key.lower()]) is list:
                 iterable[key.lower()] = keys2lower(iterable[key.lower()])
@@ -120,6 +121,8 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                     with open(QuestionnaireFile) as fd:
                         questionnaire = keys2lower(xmltodict.parse(fd.read(), dict_constructor=dict))
                     if "mobiquest" in questionnaire.keys() and "survey" in questionnaire["mobiquest"].keys():
+                        questionnaire["mobiquest"] = questionnaire["mobiquest"].pop("survey")  
+                    if "mobiquest" in questionnaire.keys():
                         dataRow = {}
                         dataRow["File"] = os.path.basename(QuestionnaireFile)
                         dataRow["Subject"] = ""
@@ -127,7 +130,7 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                         if temppath.endswith("_Quest"):
                             dataRow["Subject"] = temppath.split("_Quest")[0]
                         dataRow["Motivation"] = getValue(result["mobiquest"], "@motivation")
-                        for question in questionnaire["mobiquest"]["survey"]["question"]:
+                        for question in questionnaire["mobiquest"]["question"]:
                             if "label" in question.keys() and "text" in question["label"].keys() and "@id" in question.keys():
                                 id = str(question["@id"]).replace("_", "")
                                 if "@hidden" in question.keys() and question["@hidden"] == "true":
