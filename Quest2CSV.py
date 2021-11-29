@@ -7,6 +7,9 @@
 # 2021-10-27 Version 1.0 Beta 2
 #   bugfix in keys2lower
 #   remove survey-leaf
+# 2021-11-29 Version 1.0 Beta 3
+#   convert \r\n to ' '
+#   NoneType to empty String
 
 import sys, os
 import configparser
@@ -140,21 +143,21 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                                     dataRow[question['label']['text']] = getValue(result["mobiquest"], "@" + question["label"]["text"].replace(" ", "_").replace("(", "").replace(")", "").lower())
                                 elif "@type" in question.keys() and question["@type"] == "checkbox" and "option" in question.keys():
                                     currAnswer = getValue(result["mobiquest"], "@question_id", question["@id"])
-                                    dataRow[id] = {"text" : question["label"]["text"], "value": 0, "values": {}}
+                                    dataRow[id] = {"text" : question["label"]["text"].replace("\r", "").replace("\n", " "), "value": 0, "values": {}}
                                     for option in question["option"]:
                                         option["@id"] = option["@id"].replace("_", "")
-                                        dataRow[id]["values"][option["@id"]] = {"text": str(option["text"]), "value" : 0}
+                                        dataRow[id]["values"][option["@id"]] = {"text": str(option["text"].replace("\r", "").replace("\n", " ")), "value" : 0}
                                         if "@option_ids" in currAnswer.keys() and option["@id"] in currAnswer["@option_ids"].split(";"):
                                             dataRow[id]["values"][option["@id"]]["value"] = 1
                                             dataRow[id]["value"] = 1;
                                 else:
-                                    dataRow[id] = {"text": question["label"]["text"], "values": {}}
+                                    dataRow[id] = {"text": question["label"]["text"].replace("\r", "").replace("\n", " "), "values": {}}
                                     res = getValue(result["mobiquest"], "@question_id", id)
                                     if "@option_ids" in res.keys():
                                         dataRow[id]["values"][res["@option_ids"]] = ""
                                         res_label = getValue(question, "@id", res["@option_ids"])
                                         if type(res_label) is dict and "text" in res_label.keys():
-                                            dataRow[id]["values"][res["@option_ids"]] = res_label["text"]
+                                            dataRow[id]["values"][res["@option_ids"]] = str(res_label["text"] or '').replace("\r", "").replace("\n", " ")
                                         elif "@type" in question.keys() and (question["@type"] == "sliderFree" or question["@type"] == "text"):
                                             dataRow[id]["values"][res["@option_ids"]] = res["@option_ids"]
                         newFile = False
@@ -182,6 +185,7 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                                     else:
                                         file_object.write(";")
                                 file_object.write("\n")
+                                file_object.flush()
 
                             for item in dataRow:
                                 if type(dataRow[item]) is dict and "values" in dataRow[item].keys():
@@ -196,6 +200,7 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                                 else:
                                     file_object.write(dataRow[item] + ";")
                             file_object.write("\n")
+                            file_object.flush()
                     else:
                         raise ValueError("Questionnaire File '" + QuestionnaireFile + "' not valid!" )
                 else:
