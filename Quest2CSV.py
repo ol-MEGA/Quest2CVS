@@ -10,6 +10,9 @@
 # 2021-11-29 Version 1.0 Beta 3
 #   convert \r\n to ' '
 #   NoneType to empty String
+# 2021-12-01 Version 1.0 Beta 4
+#   fill empty header
+#   store in latin-1 (for windows)
 
 import sys, os
 import configparser
@@ -162,14 +165,17 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                                             dataRow[id]["values"][res["@option_ids"]] = res["@option_ids"]
                         newFile = False
                         if not os.path.isfile(CSVOutputFile):
-                            newFile = True                
-                        with open(CSVOutputFile, "a") as file_object:
+                            newFile = True
+                        myEncoding = "utf-8"
+                        if os.name == "nt":
+                            myEncoding = "latin-1"
+                        with open(CSVOutputFile, "a", encoding=myEncoding) as file_object:
                             if newFile:
                                 for item in dataRow:
                                     file_object.write(item + ";")
                                     if type(dataRow[item]) is dict and "values" in dataRow[item].keys():
                                         if len(dataRow[item]["values"]) <= 1:
-                                            file_object.write(";")
+                                            file_object.write(item + "_text;")
                                         else:
                                             for option in dataRow[item]["values"]:
                                                 file_object.write(option + ";")
