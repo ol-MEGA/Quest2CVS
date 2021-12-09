@@ -13,6 +13,10 @@
 # 2021-12-01 Version 1.0 Beta 4
 #   fill empty header
 #   store in latin-1 (for windows)
+# 2021-12-01 Version 1.0 Beta 5
+#   removed: store in latin-1 (for windows)
+#   fields added: date, time and DateTime
+#   filename corrected
 
 import sys, os
 import configparser
@@ -133,8 +137,11 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                         questionnaire["mobiquest"] = questionnaire["mobiquest"].pop("survey")  
                     if "mobiquest" in questionnaire.keys():
                         dataRow = {}
-                        dataRow["File"] = os.path.basename(QuestionnaireFile)
+                        dataRow["File"] = os.path.basename(QuestionnaireResult)
                         dataRow["Subject"] = ""
+                        dataRow["Date"] = QuestionnaireResult.split('_')[1]
+                        dataRow["Time"] = QuestionnaireResult.split('_')[2].split('.')[0]
+                        dataRow["DateTime"] = dataRow["Date"] + "_" + dataRow["Time"]
                         temppath = os.path.split(QuestionnaireResult)[0].split(os.sep)[-1]
                         if temppath.endswith("_Quest"):
                             dataRow["Subject"] = temppath.split("_Quest")[0]
@@ -167,8 +174,8 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                         if not os.path.isfile(CSVOutputFile):
                             newFile = True
                         myEncoding = "utf-8"
-                        if os.name == "nt":
-                            myEncoding = "latin-1"
+                        #if os.name == "nt":
+                        #    myEncoding = "latin-1"
                         with open(CSVOutputFile, "a", encoding=myEncoding) as file_object:
                             if newFile:
                                 for item in dataRow:
