@@ -13,10 +13,12 @@
 # 2021-12-01 Version 1.0 Beta 4
 #   fill empty header
 #   store in latin-1 (for windows)
-# 2021-12-01 Version 1.0 Beta 5
+# 2021-12-09 Version 1.0 Beta 5
 #   removed: store in latin-1 (for windows)
 #   fields added: date, time and DateTime
 #   filename corrected
+# 2021-12-10 Version 1.0 Beta 5
+#   filewrite optimized
 
 import sys, os
 import configparser
@@ -108,7 +110,6 @@ def getValue(xmlData, searchItem, value = False):
 def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "output.csv", Append = False):
     if Append == False and os.path.isfile(CSVOutputFile):
         os.remove(CSVOutputFile)
-        Append = True
     error = False
     if not os.path.isfile(QuestionnaireFile):
         error = "Questionnaire File '" + QuestionnaireFile + "' does not exist!" 
@@ -124,7 +125,7 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
             for (dirpath, dirnames, filenames) in os.walk(QuestionnaireResult):
                 for filename in filenames:
                     if filename.lower().endswith(".xml"):
-                        executeQuest2CSV(QuestionnaireFile, os.path.join(dirpath, filename), CSVOutputFile, Append)
+                        executeQuest2CSV(QuestionnaireFile, os.path.join(dirpath, filename), CSVOutputFile, True)
         else:
             print("Executing: ", QuestionnaireResult)
             with open(QuestionnaireResult) as fd:
