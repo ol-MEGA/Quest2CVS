@@ -140,8 +140,8 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                         dataRow = {}
                         dataRow["File"] = os.path.basename(QuestionnaireResult)
                         dataRow["Subject"] = ""
-                        dataRow["Date"] = QuestionnaireResult.split('_')[1]
-                        dataRow["Time"] = QuestionnaireResult.split('_')[2].split('.')[0]
+                        dataRow["Date"] = dataRow["File"].split('_')[1]
+                        dataRow["Time"] = dataRow["File"].split('_')[2].split('.')[0]
                         dataRow["DateTime"] = dataRow["Date"] + "_" + dataRow["Time"]
                         temppath = os.path.split(QuestionnaireResult)[0].split(os.sep)[-1]
                         if temppath.endswith("_Quest"):
@@ -157,7 +157,7 @@ def executeQuest2CSV(QuestionnaireFile, QuestionnaireResult, CSVOutputFile = "ou
                                     dataRow[id] = {"text" : question["label"]["text"].replace("\r", "").replace("\n", " "), "value": 0, "values": {}}
                                     for option in question["option"]:
                                         option["@id"] = option["@id"].replace("_", "")
-                                        dataRow[id]["values"][option["@id"]] = {"text": str(option["text"].replace("\r", "").replace("\n", " ")), "value" : 0}
+                                        dataRow[id]["values"][option["@id"]] = {"text": str(option["text"]).replace("\r", "").replace("\n", " "), "value" : 0}
                                         if "@option_ids" in currAnswer.keys() and option["@id"] in currAnswer["@option_ids"].split(";"):
                                             dataRow[id]["values"][option["@id"]]["value"] = 1
                                             dataRow[id]["value"] = 1;
